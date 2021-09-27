@@ -22,13 +22,22 @@ import { Header } from "../../components/Header";
 import { Pagination } from "../../components/Pagination";
 import { Sidebar } from "../../components/Sidebar";
 import NextLink from "next/link";
-import { useUsers } from "../../services/hooks/useUsers";
+import {
+  getUsers,
+  GetUsersResponse,
+  useUsers,
+} from "../../services/hooks/useUsers";
 import { queryClient } from "../../services/queryClient";
 import { api } from "../../services/api";
+import { GetServerSideProps } from "next";
 
-export default function UserList() {
+export default function UserList({ users }) {
   const [page, setPage] = useState(1);
-  const { data, isLoading, isFetching, error } = useUsers(page);
+  const { data, isLoading, isFetching, error } = useUsers(page, {
+    initialData: users,
+  });
+
+  const newData = data as GetUsersResponse;
 
   const isWideVersion = useBreakpointValue({
     base: false,
@@ -95,7 +104,7 @@ export default function UserList() {
                   </Tr>
                 </Thead>
                 <Tbody>
-                  {data.users.map((user) => (
+                  {newData.users.map((user) => (
                     <Tr key={user.id}>
                       <Td px={["4", "4", "6"]}>
                         <Checkbox colorScheme="pink" />
@@ -134,7 +143,7 @@ export default function UserList() {
                 </Tbody>
               </Table>
               <Pagination
-                totalCountOfRegisters={data.totalCount}
+                totalCountOfRegisters={newData.totalCount}
                 currentPage={page}
                 onPageChange={setPage}
               />
@@ -145,3 +154,13 @@ export default function UserList() {
     </Box>
   );
 }
+
+export const getServerSideProps: GetServerSideProps = async () => {
+  const { users, totalCount } = await getUsers(1);
+
+  return {
+    props: {
+      users,
+    },
+  };
+};
